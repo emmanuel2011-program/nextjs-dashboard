@@ -18,11 +18,11 @@ export default function Page() {
         <div className="flex flex-col justify-center gap-6 rounded-lg bg-gray-50 px-6 py-10 md:w-2/5 md:px-20">
           <div className="relative w-0 h-0 border-l-[15px] border-r-[15px] border-b-[26px] border-l-transparent border-r-transparent border-b-black"/>
           <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
-            <strong>Welcome to SULEJA H H MULTIPURPOSE COOPERATIVE SOC NIGERIA LIMITED.</strong> Working Together to Empower Others{' '}
-            <a href="https://srgmcs.com/" className="text-blue-500">
+            <strong>Welcome to SULEJA H H MULTIPURPOSE COOPERATIVE SOC NIGERIA LIMITED.</strong> This is the example for the{' '}
+            <a href="https://nextjs.org/learn/" className="text-blue-500">
               Next.js Learn Course
             </a>
-            , brought to you by SHHMCS. LTD
+            , brought to you by Vercel.
           </p>
           <Link
             href="/login"
@@ -37,7 +37,7 @@ export default function Page() {
         src="/hero-desktop.png"
         width={1000}
         height={760}
-        className="block"
+        className="hidden md:block"
         alt="Screenshots of the dashboard project showing desktop version"
       />
         </div>
