@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Member {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+
+  loans Loan[]
+}
+
+model Loan {
+  id        Int      @id @default(autoincrement())
+  memberId  Int
+  amount    Float
+  duration  Int
+  interest  Float
+  createdAt DateTime @default(now())
+
+  member   Member   @relation(fields: [memberId], references: [id])
+  interests Interest[]
+}
+
+model Interest {
+  id        Int      @id @default(autoincrement())
+  loanId    Int
+  rate      Float
+  createdAt DateTime @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id])
+}

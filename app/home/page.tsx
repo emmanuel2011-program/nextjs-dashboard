@@ -1,5 +1,9 @@
 'use client';
 
+
+
+
+
 export default function DashboardHomePage() {
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white shadow rounded">

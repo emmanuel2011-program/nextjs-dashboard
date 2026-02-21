@@ -24,6 +24,7 @@ type FormData = {
   repaymentDate: string;
 
   spouseName: string;
+  spouseMobilePhone: string;
   spouseTitle: string;
   spouseDOB: string;
   spouseGender: string;
@@ -40,11 +41,11 @@ type FormData = {
 
   document: File | null;
   signature: string;
+  passportPhoto: File | null;
 
   agreementName1: string;
   agreementName2: string;
   agreementName3: string;
-  
 };
 
 const initialState: FormData = {
@@ -66,6 +67,7 @@ const initialState: FormData = {
   interest: '',
   repaymentDate: '',
   spouseName: '',
+  spouseMobilePhone: '',
   spouseTitle: '',
   spouseDOB: '',
   spouseGender: '',
@@ -80,15 +82,16 @@ const initialState: FormData = {
   accountNumber: '',
   document: null,
   signature: '',
+  passportPhoto: null,
   agreementName1: '',
   agreementName2: '',
   agreementName3: '',
-  
 };
 
 export default function Page() {
   const [formData, setFormData] = useState<FormData>(initialState);
   const [step, setStep] = useState(1);
+  const [submitted, setSubmitted] = useState(false);
 
   const updateField = (name: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -99,7 +102,7 @@ export default function Page() {
       1: ['title','surname','firstName','dateOfBirth','gender','nationality'],
       2: ['residentialAddress','contactAddress','tin','email','mobilePhone'],
       3: ['loanAmount','requestDate','duration','interest','repaymentDate'],
-      4: ['spouseName','spouseTitle','spouseDOB','spouseGender','spouseNationality','spouseStateOfOrigin','spouseLocalGovt','spouseMaritalStatus','spouseResidentialAddress'],
+      4: ['spouseName','spouseMobilePhone','spouseTitle','spouseDOB','spouseGender','spouseNationality','spouseStateOfOrigin','spouseLocalGovt','spouseMaritalStatus','spouseResidentialAddress'],
       5: ['bankName','accountType','accountName','accountNumber','document','signature'],
       6: ['agreementName1','agreementName2','agreementName3'],
     };
@@ -131,25 +134,64 @@ export default function Page() {
       }
     }
 
-    if (step===5) {
-     const accountNumberRegex = /^\d{1,10}$/;
-
-    if (!accountNumberRegex.test(formData.accountNumber)) {
-        alert('account number must be numeric and max 11 digits');
+    if (step === 4) {
+      const spouseMobilePhoneRegex = /^\+?\d{10,15}$/;
+      if (!spouseMobilePhoneRegex.test(formData.spouseMobilePhone)) {
+        alert('Enter a valid spouse phone number');
         return false;
       }
     }
+
+    if (step === 5) {
+      const accountNumberRegex = /^\d{1,10}$/;
+      if (!accountNumberRegex.test(formData.accountNumber)) {
+        alert('Account number must be numeric and max 10 digits');
+        return false;
+      }
+    }
+
     return true;
   };
 
   const nextStep = () => validateStep() && setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateStep()) return;
+
+    console.log("Form submitted:", formData);
+
+    setSubmitted(true);
+    setFormData(initialState);
+    setStep(1);
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-xl mx-auto mt-20 p-6 bg-green-100 border border-green-400 rounded text-center">
+        <h2 className="text-2xl font-bold text-green-800">
+          ✅ Application Submitted Successfully
+        </h2>
+        <p className="mt-2 text-green-700">
+          Your loan application has been received. We will contact you shortly.
+        </p>
+
+        <button
+          className="mt-4 px-6 py-2 bg-green-600 text-white rounded"
+          onClick={() => setSubmitted(false)}
+        >
+          Submit Another Application
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-6 bg-white shadow rounded space-y-6">
       <h1 className="text-2xl font-bold">Customer & Loan Application Form</h1>
 
-      <form className="space-y-6">
+      <form className="space-y-6" onSubmit={handleSubmit}>
 
         {/* Step 1 */}
         {step === 1 && (
@@ -188,8 +230,32 @@ export default function Page() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Loan Amount" name="loanAmount" onBlur={updateField} />
             <Input label="Request Date" type="date" name="requestDate" onBlur={updateField} />
-            <Input label="Duration (months)" name="duration" onBlur={updateField} />
-            <Input label="Interest (%)" name="interest" onBlur={updateField} />
+            <div className="flex flex-col">
+              <label>Duration (months)</label>
+              <select
+                name="duration"
+                value={formData.duration}
+                onChange={e => updateField('duration', e.target.value)}
+                className="border p-2 rounded"
+              >
+                <option value="">--Select Duration--</option>
+                <option value="1">1 month</option>
+                <option value="2">2 months</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label>Interest (%)</label>
+              <select
+                name="interest"
+                value={formData.interest}
+                onChange={e => updateField('interest', e.target.value)}
+                className="border p-2 rounded"
+              >
+                <option value="">--Select Interest--</option>
+                <option value="15">15%</option>
+              </select>
+            </div>
             <Input label="Repayment Date" type="date" name="repaymentDate" onBlur={updateField} />
           </div>
         )}
@@ -200,6 +266,7 @@ export default function Page() {
             <h2 className="text-xl font-semibold">Spouse Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input label="Spouse Full Name" name="spouseName" onBlur={updateField} />
+              <Input label="Spouse Mobile Phone" name="spouseMobilePhone" pattern="^\+?\d{10,15}$" onBlur={updateField} />
               <Input label="Title" name="spouseTitle" onBlur={updateField} />
               <Input label="Date of Birth" type="date" name="spouseDOB" onBlur={updateField} />
               <Input label="Gender" name="spouseGender" onBlur={updateField} />
@@ -215,7 +282,7 @@ export default function Page() {
         {/* Step 5 */}
         {step === 5 && (
           <>
-            <h2 className="text-xl font-semibold">Bank & Documents</h2>
+            <h2 className="text-xl font-semibold">Customer Bank Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input label="Bank Name" name="bankName" onBlur={updateField} />
               <Input label="Account Type" name="accountType" onBlur={updateField} />
@@ -223,7 +290,25 @@ export default function Page() {
               <Input label="Account Name" name="accountName" onBlur={updateField} />
             </div>
 
-            <input type="file" onChange={e => updateField('document', e.target.files?.[0] || null)} />
+            <div className="flex flex-col">
+              <label className="font-semibold">Upload ID</label>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={e => updateField('document', e.target.files?.[0] || null)}
+              />
+              {formData.document && <span className="text-sm text-gray-500 mt-1">Selected: {formData.document.name}</span>}
+            </div>
+
+            <div className="flex flex-col">
+              <label className="font-semibold">Upload Passport Photo</label>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png"
+                onChange={e => updateField('passportPhoto', e.target.files?.[0] || null)}
+              />
+              {formData.passportPhoto && <span className="text-sm text-gray-500 mt-1">Selected: {formData.passportPhoto.name}</span>}
+            </div>
 
             <input
               type="text"
@@ -236,54 +321,49 @@ export default function Page() {
         )}
 
         {/* Step 6 */}
-{step === 6 && (
-  <div className="space-y-6">
+        {step === 6 && (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                hereby irrevocably and unconditionally agree to abide by the agreement 
+                covering the said institution, to make good any loss the firm may suffer 
+                as a result of my non compliance to the said agreement.
+              </p>
+              <input
+                className="border p-2 rounded w-full"
+                placeholder="Enter your full name"
+                value={formData.agreementName1}
+                onChange={e => updateField('agreementName1', e.target.value)}
+              />
+            </div>
 
-    {/* Agreement 1 */}
-    <div className="space-y-2">
-      <p className="text-sm text-gray-700 leading-relaxed">
-        hereby irrevocably and unconditionally agree to abide by the agreement 
-        covering the said institution, to make good any loss the firm may suffer 
-        as a result of my non compliance to the said agreement.
-      </p>
-      <input
-        className="border p-2 rounded w-full"
-        placeholder="Enter your full name"
-        value={formData.agreementName1}
-        onChange={e => updateField('agreementName1', e.target.value)}
-      />
-    </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                And shall pay to the institution, the bank written demand and any monies 
+                due or incurred as a result of my non compliance to this agreement.
+              </p>
+              <input
+                className="border p-2 rounded w-full"
+                placeholder="Enter your full name"
+                value={formData.agreementName2}
+                onChange={e => updateField('agreementName2', e.target.value)}
+              />
+            </div>
 
-    {/* Agreement 2 */}
-    <div className="space-y-2">
-      <p className="text-sm text-gray-700 leading-relaxed">
-        And shall pay to the institution, the bank written demand and any monies 
-        due or incurred as a result of my non compliance to this agreement.
-      </p>
-      <input
-        className="border p-2 rounded w-full"
-        placeholder="Enter your full name"
-        value={formData.agreementName2}
-        onChange={e => updateField('agreementName2', e.target.value)}
-      />
-    </div>
-
-    {/* Agreement 3 */}
-    <div className="space-y-2">
-      <p className="text-sm text-gray-700 leading-relaxed">
-        I also agree with the COOPERATIVE institution’s management to further pay 
-        for any losses intended or not intended during the transaction.
-      </p>
-      <input
-        className="border p-2 rounded w-full"
-        placeholder="Enter your full name"
-        value={formData.agreementName3}
-        onChange={e => updateField('agreementName3', e.target.value)}
-      />
-      </div>
-
-      </div>
-      )}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                I also agree with the COOPERATIVE institution’s management to further pay 
+                for any losses intended or not intended during the transaction.
+              </p>
+              <input
+                className="border p-2 rounded w-full"
+                placeholder="Enter your full name"
+                value={formData.agreementName3}
+                onChange={e => updateField('agreementName3', e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-4">
           {step > 1 && <button type="button" onClick={prevStep}>Previous</button>}
