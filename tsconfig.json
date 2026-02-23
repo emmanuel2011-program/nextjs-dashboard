@@ -31,6 +31,6 @@
     "app/lib/placeholder-data.ts",
     "scripts/seed.js",
     ".next/dev/types/**/*.ts"
-, "app/seed/index.ts"  ],
+, "prisma/seed/index.ts", "prisma/seed/interestRates.js", "prisma/seed/loans.js", "prisma/seed/members.js", "prisma/seed/runSeed.js", "prisma/db.js"  ],
   "exclude": ["node_modules"]
 }
