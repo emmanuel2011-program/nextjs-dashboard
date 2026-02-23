@@ -1,168 +1,321 @@
 'use client';
 
 import { useState } from 'react';
+import { registerMember, submitLoanApplication } from '@/app/lib/actions';
 
 type FormData = {
-  fullName: string;
-  email: string;
-  phone: string;
+  title: string;
+  surname: string;
+  firstName: string;
+  middleName: string;
   dateOfBirth: string;
-  address: string;
-  membershipType: string;
-  idDocument: File | null;
+  gender: string;
+  nationality: string;
+  residentialAddress: string;
+  contactAddress: string;
+  tin: string;
+  email: string;
+  mobilePhone: string;
+  loanAmount: string;
+  requestDate: string;
+  duration: string;
+  interest: string;
+  repaymentDate: string;
+  spouseName: string;
+  spouseMobilePhone: string;
+  spouseTitle: string;
+  spouseDOB: string;
+  spouseGender: string;
+  spouseNationality: string;
+  spouseStateOfOrigin: string;
+  spouseLocalGovt: string;
+  spouseMaritalStatus: string;
+  spouseResidentialAddress: string;
+  bankName: string;
+  accountType: string;
+  accountName: string;
+  accountNumber: string;
+  document: File | null;
+  signature: string;
+  passportPhoto: File | null;
+  agreementName1: string;
+  agreementName2: string;
+  agreementName3: string;
 };
 
 const initialState: FormData = {
-  fullName: '',
-  email: '',
-  phone: '',
-  dateOfBirth: '',
-  address: '',
-  membershipType: '',
-  idDocument: null,
+  title: '', surname: '', firstName: '', middleName: '', dateOfBirth: '',
+  gender: '', nationality: '', residentialAddress: '', contactAddress: '',
+  tin: '', email: '', mobilePhone: '', loanAmount: '', requestDate: '',
+  duration: '', interest: '', repaymentDate: '', spouseName: '',
+  spouseMobilePhone: '', spouseTitle: '', spouseDOB: '', spouseGender: '',
+  spouseNationality: '', spouseStateOfOrigin: '', spouseLocalGovt: '',
+  spouseMaritalStatus: '', spouseResidentialAddress: '', bankName: '',
+  accountType: '', accountName: '', accountNumber: '', document: null,
+  signature: '', passportPhoto: null, agreementName1: '',
+  agreementName2: '', agreementName3: '',
 };
 
-export default function MembershipPage() {
+export default function Page() {
   const [formData, setFormData] = useState<FormData>(initialState);
+  const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [isPending, setIsPending] = useState(false); // Track loading state
 
-  // Added proper types to the handleChange function
-  const handleChange = (field: keyof FormData, value: string | File | null) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const updateField = (name: keyof FormData, value: any) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateStep = () => {
+    const stepFields: Record<number, (keyof FormData)[]> = {
+      1: ['title','surname','firstName','dateOfBirth','gender','nationality'],
+      2: ['residentialAddress','contactAddress','tin','email','mobilePhone'],
+      3: ['loanAmount','requestDate','duration','interest','repaymentDate'],
+      4: ['spouseName','spouseMobilePhone','spouseTitle','spouseDOB','spouseGender','spouseNationality','spouseStateOfOrigin','spouseLocalGovt','spouseMaritalStatus','spouseResidentialAddress'],
+      5: ['bankName','accountType','accountName','accountNumber','document','signature'],
+      6: ['agreementName1','agreementName2','agreementName3'],
+    };
 
-    // Basic validation
-    for (const [key, value] of Object.entries(formData)) {
-      if (value === '' || value === null) {
-        alert(`Please fill in ${key}`);
-        return;
+    for (const field of stepFields[step] || []) {
+      if (!formData[field] || (field === 'document' && formData.document === null)) {
+        alert(`Please fill in ${field}`);
+        return false;
       }
     }
 
-    console.log('Membership Form Submitted:', formData);
-    setSubmitted(true);
-    setFormData(initialState);
-    setShowForm(false);
+    if (step === 2) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phoneRegex = /^\+?\d{10,15}$/;
+      const tinRegex = /^\d{1,11}$/;
+      if (!tinRegex.test(formData.tin)) { alert('TIN must be numeric and max 11 digits'); return false; }
+      if (!emailRegex.test(formData.email)) { alert('Enter a valid email'); return false; }
+      if (!phoneRegex.test(formData.mobilePhone)) { alert('Enter a valid phone number'); return false; }
+    }
+
+    if (step === 4) {
+      const spouseMobilePhoneRegex = /^\+?\d{10,15}$/;
+      if (!spouseMobilePhoneRegex.test(formData.spouseMobilePhone)) { alert('Enter a valid spouse phone number'); return false; }
+    }
+
+    if (step === 5) {
+      const accountNumberRegex = /^\d{1,10}$/;
+      if (!accountNumberRegex.test(formData.accountNumber)) { alert('Account number must be numeric and max 10 digits'); return false; }
+    }
+
+    return true;
   };
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto bg-white shadow rounded space-y-6 text-black">
-      <h1 className="text-2xl font-bold">Membership Page</h1>
-      <p>
-        Welcome to the membership page. Here you can view membership details,
-        apply for new membership, or manage your existing membership.
-      </p>
+  const nextStep = () => validateStep() && setStep(s => s + 1);
+  const prevStep = () => setStep(s => s - 1);
 
-      {/* Membership Plans */}
-      <section className="border p-4 rounded">
-        <h2 className="font-semibold">Membership Plans</h2>
-        <ul className="list-disc list-inside">
-          <li>Standard Membership</li>
-          <li>Premium Membership</li>
-          <li>Corporate Membership</li>
-        </ul>
-      </section>
+  // --- UPDATED SUBMIT LOGIC ---
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateStep()) return;
 
-      {/* Apply for Membership */}
-      <section className="border p-4 rounded">
-        <h2 className="font-semibold">Apply for Membership</h2>
-        <p>Click the button below to open the membership application form.</p>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          {showForm ? 'Close Form' : 'Apply Now'}
+    setIsPending(true); // Start processing
+
+    // Convert our state object into FormData for the server
+    const dataToSend = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value instanceof File) {
+        dataToSend.append(key, value);
+      } else if (value !== null) {
+        dataToSend.append(key, String(value));
+      }
+    });
+
+    try {
+      // 1. Create the Member first
+      const memberResponse = await registerMember(dataToSend);
+
+      if (memberResponse.success) {
+        // 2. Add the new Member ID to the data and create the Loan
+        dataToSend.append('memberId', memberResponse.memberId as string);
+        const loanResponse = await submitLoanApplication(dataToSend);
+
+        if (loanResponse.success) {
+          setSubmitted(true);
+          setFormData(initialState);
+          setStep(1);
+        } else {
+          alert("Member created, but loan failed: " + loanResponse.message);
+        }
+      } else {
+        alert("Registration failed: " + memberResponse.message);
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("A system error occurred. Check your database connection.");
+    } finally {
+      setIsPending(false); // Stop processing
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-xl mx-auto mt-20 p-6 bg-green-100 border border-green-400 rounded text-center">
+        <h2 className="text-2xl font-bold text-green-800">✅ Application Submitted Successfully</h2>
+        <p className="mt-2 text-green-700">Your data has been saved to the cloud database.</p>
+        <button className="mt-4 px-6 py-2 bg-green-600 text-white rounded" onClick={() => setSubmitted(false)}>
+          Submit Another Application
         </button>
+      </div>
+    );
+  }
 
-        {showForm && (
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4 bg-gray-50 p-4 rounded shadow">
-            {submitted && (
-              <p className="text-green-600 font-semibold">
-                Your membership form has been submitted successfully!
-              </p>
-            )}
-            
-            {/* Added (val: string) type to the arrow functions below */}
-            <Input label="Full Name" value={formData.fullName} onChange={(val: string) => handleChange('fullName', val)} />
-            <Input label="Email" type="email" value={formData.email} onChange={(val: string) => handleChange('email', val)} />
-            <Input label="Phone Number" value={formData.phone} onChange={(val: string) => handleChange('phone', val)} />
-            <Input label="Date of Birth" type="date" value={formData.dateOfBirth} onChange={(val: string) => handleChange('dateOfBirth', val)} />
-            <Textarea label="Residential Address" value={formData.address} onChange={(val: string) => handleChange('address', val)} />
+  return (
+    <div className="max-w-5xl mx-auto p-6 bg-white shadow rounded space-y-6">
+      <h1 className="text-2xl font-bold">Customer & Loan Application Form</h1>
 
+      <form className="space-y-6" onSubmit={handleSubmit}>
+
+        {/* Step 1 */}
+        {step === 1 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input label="Title" name="title" onBlur={updateField} />
+            <Input label="Surname" name="surname" onBlur={updateField} />
+            <Input label="First Name" name="firstName" onBlur={updateField} />
+            <Input label="Middle Name (optional)" name="middleName" onBlur={updateField} />
+            <Input label="Date of Birth" type="date" name="dateOfBirth" onBlur={updateField} />
+            <Input label="Nationality" name="nationality" onBlur={updateField} />
+            <div>
+              <label className="block text-sm font-semibold">Gender</label>
+              <label><input type="radio" name="gender" value="Male" onChange={e => updateField('gender', e.target.value)} /> Male</label>
+              <label className="ml-4"><input type="radio" name="gender" value="Female" onChange={e => updateField('gender', e.target.value)} /> Female</label>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2 */}
+        {step === 2 && (
+          <>
+            <Textarea label="Residential Address" name="residentialAddress" onBlur={updateField} />
+            <Textarea label="Contact Address" name="contactAddress" onBlur={updateField} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input label="TIN" name="tin" maxLength={11} pattern="\d{1,11}" onBlur={updateField} />
+              <Input label="Email" type="email" name="email" onBlur={updateField} />
+              <Input label="Mobile Phone" name="mobilePhone" pattern="^\+?\d{10,15}$" onBlur={updateField} />
+            </div>
+          </>
+        )}
+
+        {/* Step 3 */}
+        {step === 3 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Loan Amount" name="loanAmount" onBlur={updateField} />
+            <Input label="Request Date" type="date" name="requestDate" onBlur={updateField} />
             <div className="flex flex-col">
-              <label className="font-semibold mb-1">Membership Type</label>
-              <select
-                className="border p-2 rounded"
-                value={formData.membershipType}
-                onChange={e => handleChange('membershipType', e.target.value)}
-              >
-                <option value="">Select Type</option>
-                <option value="Standard">Standard</option>
-                <option value="Premium">Premium</option>
-                <option value="Corporate">Corporate</option>
+              <label>Duration (months)</label>
+              <select name="duration" value={formData.duration} onChange={e => updateField('duration', e.target.value)} className="border p-2 rounded">
+                <option value="">--Select Duration--</option>
+                <option value="1">1 month</option>
+                <option value="2">2 months</option>
               </select>
             </div>
-
             <div className="flex flex-col">
-              <label className="font-semibold mb-1">Upload ID Document</label>
-              <input
-                type="file"
-                onChange={e => handleChange('idDocument', e.target.files?.[0] || null)}
-              />
+              <label>Interest (%)</label>
+              <select name="interest" value={formData.interest} onChange={e => updateField('interest', e.target.value)} className="border p-2 rounded">
+                <option value="">--Select Interest--</option>
+                <option value="15">15%</option>
+              </select>
             </div>
-
-            <button type="submit" className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
-              Submit Membership
-            </button>
-          </form>
+            <Input label="Repayment Date" type="date" name="repaymentDate" onBlur={updateField} />
+          </div>
         )}
-      </section>
+
+        {/* Step 4 */}
+        {step === 4 && (
+          <>
+            <h2 className="text-xl font-semibold">Spouse Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input label="Spouse Full Name" name="spouseName" onBlur={updateField} />
+              <Input label="Spouse Mobile Phone" name="spouseMobilePhone" pattern="^\+?\d{10,15}$" onBlur={updateField} />
+              <Input label="Title" name="spouseTitle" onBlur={updateField} />
+              <Input label="Date of Birth" type="date" name="spouseDOB" onBlur={updateField} />
+              <Input label="Gender" name="spouseGender" onBlur={updateField} />
+              <Input label="Nationality" name="spouseNationality" onBlur={updateField} />
+              <Input label="State of Origin" name="spouseStateOfOrigin" onBlur={updateField} />
+              <Input label="Local Gov Area" name="spouseLocalGovt" onBlur={updateField} />
+              <Input label="Marital Status" name="spouseMaritalStatus" onBlur={updateField} />
+              <Textarea label="Residential Address" name="spouseResidentialAddress" onBlur={updateField} />
+            </div>
+          </>
+        )}
+
+        {/* Step 5 */}
+        {step === 5 && (
+          <>
+            <h2 className="text-xl font-semibold">Customer Bank Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input label="Bank Name" name="bankName" onBlur={updateField} />
+              <Input label="Account Type" name="accountType" onBlur={updateField} />
+              <Input label="Account Number" name="accountNumber" onBlur={updateField} />
+              <Input label="Account Name" name="accountName" onBlur={updateField} />
+            </div>
+            <div className="flex flex-col">
+              <label className="font-semibold">Upload ID</label>
+              <input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={e => updateField('document', e.target.files?.[0] || null)} />
+            </div>
+            <div className="flex flex-col">
+              <label className="font-semibold">Upload Passport Photo</label>
+              <input type="file" accept=".jpg,.jpeg,.png" onChange={e => updateField('passportPhoto', e.target.files?.[0] || null)} />
+            </div>
+            <input type="text" placeholder="Type name as signature" className="border p-2 rounded" value={formData.signature} onChange={e => updateField('signature', e.target.value)} />
+          </>
+        )}
+
+        {/* Step 6 */}
+        {step === 6 && (
+          <div className="space-y-6">
+            <AgreementItem text="hereby irrevocably agree..." value={formData.agreementName1} onChange={(v: string) => updateField('agreementName1', v)} />
+            <AgreementItem text="And shall pay to the institution..." value={formData.agreementName2} onChange={(v: string) => updateField('agreementName2', v)} />
+            <AgreementItem text="I also agree with management..." value={formData.agreementName3} onChange={(v: string) => updateField('agreementName3', v)} />
+          </div>
+        )}
+
+        <div className="flex gap-4">
+          {step > 1 && <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={prevStep}>Previous</button>}
+          {step < 6 && <button type="button" className="px-4 py-2 bg-blue-500 text-white rounded" onClick={nextStep}>Next</button>}
+          {step === 6 && (
+            <button 
+              type="submit" 
+              disabled={isPending}
+              className={`px-4 py-2 text-white rounded ${isPending ? 'bg-gray-400' : 'bg-green-600'}`}
+            >
+              {isPending ? 'Submitting...' : 'Submit Application'}
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
 
-/* Updated component interfaces to replace 'any' */
-interface InputProps {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  type?: string;
-}
-
-function Input({ label, value, onChange, type = 'text' }: InputProps) {
+// Helper Components
+function Input({ label, name, type='text', onBlur, maxLength, pattern }: any) {
   return (
     <div className="flex flex-col">
-      <label className="font-semibold mb-1">{label}</label>
-      <input
-        type={type}
-        className="border p-2 rounded"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-      />
+      <label className="text-sm font-medium">{label}</label>
+      <input type={type} name={name} maxLength={maxLength} pattern={pattern} className="border p-2 rounded" onBlur={e => onBlur(name, e.target.value)} />
     </div>
   );
 }
 
-interface TextareaProps {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-}
-
-function Textarea({ label, value, onChange }: TextareaProps) {
+function Textarea({ label, name, onBlur }: any) {
   return (
     <div className="flex flex-col">
-      <label className="font-semibold mb-1">{label}</label>
-      <textarea
-        rows={3}
-        className="border p-2 rounded"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-      />
+      <label className="text-sm font-medium">{label}</label>
+      <textarea className="border p-2 rounded" rows={2} onBlur={e => onBlur(name, e.target.value)} />
+    </div>
+  );
+}
+
+function AgreementItem({ text, value, onChange }: any) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
+      <input className="border p-2 rounded w-full" placeholder="Full name" value={value} onChange={e => onChange(e.target.value)} />
     </div>
   );
 }

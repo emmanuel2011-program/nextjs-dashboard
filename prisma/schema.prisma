@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"] // Use this instead of adapter-neon
 }
 
 datasource db {
   provider = "postgresql"
 
- 
 }
 
 model Member {
@@ -14,8 +14,7 @@ model Member {
   email     String   @unique
   phone     String?
   createdAt DateTime @default(now())
-
-  loans Loan[]
+  loans     Loan[]
 }
 
 model Loan {
@@ -26,7 +25,7 @@ model Loan {
   interest  Float
   createdAt DateTime @default(now())
 
-  member   Member   @relation(fields: [memberId], references: [id])
+  member    Member     @relation(fields: [memberId], references: [id])
   interests Interest[]
 }
 
@@ -37,4 +36,91 @@ model Interest {
   createdAt DateTime @default(now())
 
   loan Loan @relation(fields: [loanId], references: [id])
+}
+
+model LoanApplication {
+  id          String   @id @default(cuid())
+  // Personal Info
+  title       String
+  surname     String
+  firstName   String
+  middleName  String?
+  dateOfBirth String
+  gender      String
+  nationality String
+
+  // Contact Info
+  residentialAddress String
+  contactAddress     String
+  tin                String
+  email              String
+  mobilePhone        String
+
+  // Loan Info
+  loanAmount    String
+  requestDate   String
+  duration      String
+  interest      String
+  repaymentDate String
+
+  // Spouse Info (Fixed capitalization from 'string' to 'String')
+  spouseName               String
+  spouseMobilePhone        String
+  spouseTitle              String
+  spouseDOB                String
+  spouseGender             String
+  spouseNationality        String
+  spouseStateOfOrigin      String
+  spouseLocalGovt          String
+  spouseMaritalStatus      String
+  spouseResidentialAddress String
+
+  // Bank Info
+  bankName      String
+  accountNumber String
+  accountName   String
+  accountType   String
+
+  // Status & Metadata
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+
+  // Relationship
+  member   Membership @relation(fields: [memberId], references: [id])
+  memberId String
+}
+
+model Membership {
+  id                 String   @id @default(cuid())
+  // Personal Details
+  title              String
+  surname            String
+  firstName          String
+  middleName         String?
+  dateOfBirth        String
+  gender             String
+  nationality        String
+
+  // Contact & ID
+  residentialAddress String
+  contactAddress     String
+  tin                String // Tax Identification Number
+  email              String @unique
+  mobilePhone        String
+
+  // Banking
+  bankName      String
+  accountType   String
+  accountName   String
+  accountNumber String
+
+  // Spouse Info
+  spouseName   String?
+  spouseMobile String?
+
+  // System Fields
+  status           String            @default("Active")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  loanApplications LoanApplication[]
 }
