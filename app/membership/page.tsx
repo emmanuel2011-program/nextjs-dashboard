@@ -27,7 +27,8 @@ export default function MembershipPage() {
   const [submitted, setSubmitted] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const handleChange = (field: keyof FormData, value: any) => {
+  // Added proper types to the handleChange function
+  const handleChange = (field: keyof FormData, value: string | File | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -49,7 +50,7 @@ export default function MembershipPage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white shadow rounded space-y-6">
+    <div className="p-6 max-w-4xl mx-auto bg-white shadow rounded space-y-6 text-black">
       <h1 className="text-2xl font-bold">Membership Page</h1>
       <p>
         Welcome to the membership page. Here you can view membership details,
@@ -84,11 +85,13 @@ export default function MembershipPage() {
                 Your membership form has been submitted successfully!
               </p>
             )}
-            <Input label="Full Name" value={formData.fullName} onChange={val => handleChange('fullName', val)} />
-            <Input label="Email" type="email" value={formData.email} onChange={val => handleChange('email', val)} />
-            <Input label="Phone Number" value={formData.phone} onChange={val => handleChange('phone', val)} />
-            <Input label="Date of Birth" type="date" value={formData.dateOfBirth} onChange={val => handleChange('dateOfBirth', val)} />
-            <Textarea label="Residential Address" value={formData.address} onChange={val => handleChange('address', val)} />
+            
+            {/* Added (val: string) type to the arrow functions below */}
+            <Input label="Full Name" value={formData.fullName} onChange={(val: string) => handleChange('fullName', val)} />
+            <Input label="Email" type="email" value={formData.email} onChange={(val: string) => handleChange('email', val)} />
+            <Input label="Phone Number" value={formData.phone} onChange={(val: string) => handleChange('phone', val)} />
+            <Input label="Date of Birth" type="date" value={formData.dateOfBirth} onChange={(val: string) => handleChange('dateOfBirth', val)} />
+            <Textarea label="Residential Address" value={formData.address} onChange={(val: string) => handleChange('address', val)} />
 
             <div className="flex flex-col">
               <label className="font-semibold mb-1">Membership Type</label>
@@ -122,8 +125,15 @@ export default function MembershipPage() {
   );
 }
 
-/* Input and Textarea components */
-function Input({ label, value, onChange, type = 'text' }: any) {
+/* Updated component interfaces to replace 'any' */
+interface InputProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  type?: string;
+}
+
+function Input({ label, value, onChange, type = 'text' }: InputProps) {
   return (
     <div className="flex flex-col">
       <label className="font-semibold mb-1">{label}</label>
@@ -137,7 +147,13 @@ function Input({ label, value, onChange, type = 'text' }: any) {
   );
 }
 
-function Textarea({ label, value, onChange }: any) {
+interface TextareaProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function Textarea({ label, value, onChange }: TextareaProps) {
   return (
     <div className="flex flex-col">
       <label className="font-semibold mb-1">{label}</label>
