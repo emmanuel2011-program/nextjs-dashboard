@@ -7,13 +7,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
+
   experimental: {
-    turbo: {
-      root: '..',
-    },
-    // Add this to ensure Prisma stays on the server-side only
+    // This is the most important part for your database connection
     serverComponentsExternalPackages: ['@prisma/client', '@prisma/adapter-neon'],
   },
+
   logging: {
     fetches: {
       fullUrl: true,
